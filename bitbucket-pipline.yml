@@ -1,0 +1,29 @@
+# Template docker-push
+
+# This template allows you to build and push your docker image to a Docker Hub accounoption:
+options:
+  docker: true
+options:
+  docker: true
+pipelines:
+  default:
+    - step:
+          script: 
+             - export IMAGE_NAME=chandan01/application:$BITBUCKET_COMMIT
+             - docker build -t $IMAGE_NAME .
+             - docker login --username $DOCKERHUB_USER  --password $DOCKERHUB_PASS
+             - docker push $IMAGE_NAME
+             
+    - step:
+        name: "Deploy to PROD"
+        deployment: production
+        script:
+          - pipe: atlassian/aws-eks-kubectl-run:1.2.0
+            variables:
+              AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+              AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+              AWS_DEFAULT_REGION: "us-east-2"
+              CLUSTER_NAME: "hello-cluster"
+              KUBECTL_COMMAND: "apply -f deployment.yml"  
+              RESOURCE_PATH: "/"
+              DEBUG: "true"       
